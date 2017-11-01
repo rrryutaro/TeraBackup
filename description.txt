@@ -1,0 +1,12 @@
+﻿TeraBackup:
+When loading mod, copy the following folders to backup folder.
+Terraria\ModLoader\Players
+Terraria\ModLoader\Worlds
+Terraria\ModLoader\Logs
+
+Modification of setting can be done with Mod Settings Configurator.
+*However, please modify TeraBackup.json directly when changing "dateFormat".
+
+*** Acknowledgments ***
+In addition, Mod Settings uses Mod Settings Configurator.
+I am grateful to Mr. Flashkirby99 for making the setting of Mod easy.
