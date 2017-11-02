@@ -68,6 +68,11 @@ namespace TeraBackup
 			ModSetting setting = ModSettingsAPI.CreateModSettingConfig(this);
 			setting.AddComment($"TeraBackup v{TeraBackup.instance.Version}");
 			setting.AddBool("isBackup", "Take a backup", false);
+			setting.AddBool("isLogs", "Backup Logs", false);
+			setting.AddBool("isModConfigs", "Backup Mod Configs", false);
+			setting.AddBool("isMods", "Backup Mods", false);
+			setting.AddBool("isPlayers", "Backup Players", false);
+			setting.AddBool("isWorlds", "Backup Worlds", false);
 			setting.AddComment($"Date format: {Config.dateFormat}{Environment.NewLine}{GetFormatedDateString(true)}");
 		}
 
@@ -77,6 +82,11 @@ namespace TeraBackup
 			if (ModSettingsAPI.TryGetModSetting(this, out setting))
 			{
 				setting.Get("isBackup", ref Config.isBackup);
+				setting.Get("isLogs", ref Config.isLogs);
+				setting.Get("isModConfigs", ref Config.isModConfigs);
+				setting.Get("isMods", ref Config.isMods);
+				setting.Get("isPlayers", ref Config.isPlayers);
+				setting.Get("isWorlds", ref Config.isWorlds);
 			}
 		}
 
@@ -110,9 +120,18 @@ namespace TeraBackup
 			try
 			{
 				string path = Path.Combine(BackupPath, GetFormatedDateString());
-				CopyDirectory(Main.PlayerPath, path);
-				CopyDirectory(Main.WorldPath, path);
-				CopyDirectory(Path.Combine(Main.SavePath, "Logs"), path);
+
+				if (Config.isLogs)
+					CopyDirectory(Path.Combine(Main.SavePath, "Logs"), path);
+				if (Config.isModConfigs)
+					CopyDirectory(Path.Combine(Main.SavePath, "Mod Configs"), path);
+				if (Config.isMods)
+					CopyDirectory(Path.Combine(Main.SavePath, "Mods"), path);
+				if (Config.isPlayers)
+					CopyDirectory(Main.PlayerPath, path);
+				if (Config.isWorlds)
+					CopyDirectory(Main.WorldPath, path);
+				
 			}
 			catch { }
 		}

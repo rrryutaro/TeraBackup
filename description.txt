@@ -1,9 +1,12 @@
 ﻿TeraBackup:
 When loading mod, copy the following folders to backup folder.
+Terraria\ModLoader\Logs
+Terraria\ModLoader\Mod Configs
+Terraria\ModLoader\Mods
 Terraria\ModLoader\Players
 Terraria\ModLoader\Worlds
-Terraria\ModLoader\Logs
 
+You can specify whether to back up individually.
 Modification of setting can be done with Mod Settings Configurator.
 *However, please modify TeraBackup.json directly when changing "dateFormat".
 
