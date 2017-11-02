@@ -58,7 +58,7 @@
   <ItemGroup>
     <Content Include="build.txt" />
     <Content Include="description.txt" />
-    <Content Include="TeraBackup.png" />
+    <Content Include="icon.png" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\tModLoader\src\tModLoader\Terraria.csproj">
