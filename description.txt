@@ -1,15 +1,12 @@
 ﻿TeraBackup:
-When loading mod, copy the following folders to backup folder.
-Terraria\ModLoader\Logs
-Terraria\ModLoader\Mod Configs
-Terraria\ModLoader\Mods
-Terraria\ModLoader\Players
-Terraria\ModLoader\Worlds
-
+Copy files when loading this mods.
 You can specify whether to back up individually.
-Modification of setting can be done with Mod Settings Configurator.
-*However, please modify TeraBackup.json directly when changing "dateFormat".
+Use the standard configurations of tModLoader for the configurations.
 
-*** Acknowledgments ***
-In addition, Mod Settings uses Mod Settings Configurator.
-I am grateful to Mr. Flashkirby99 for making the setting of Mod easy.
+Backup execution is off by default.
+When using for the first time, turn on the "Take a backup" in the configuration.
+The backup will be performed when this mod is loaded, so reload it after changing the configuration for the first time.
+Please change the use of "Backup folder date time format" with sufficient knowledge.
+In the unlikely event that an error occurs, the configuration file will be deleted to initialize the settings.
+
+* This explanation is translated from Japanese by Google Translate.

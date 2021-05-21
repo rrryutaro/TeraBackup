@@ -2,155 +2,120 @@
 using System.IO;
 using Terraria;
 using Terraria.ModLoader;
-using FKTModSettings;
+
 
 namespace TeraBackup
 {
-	class TeraBackup : Mod
-	{
-		internal static TeraBackup instance;
-		internal static string BackupPath = Path.Combine(Main.SavePath, "Backup");
+    class TeraBackup : Mod
+    {
+        internal static TeraBackup instance;
+        internal static string BackupPath = Path.Combine(Main.SavePath, "Backup");
+        internal static string OldConfigFilePath = Path.Combine(Main.SavePath, "Mod Configs", "TeraBackup.json");
 
-		internal bool LoadedFKTModSettings = false;
 
-		public TeraBackup()
-		{
-			Properties = new ModProperties()
-			{
-				Autoload = true,
-				AutoloadGores = true,
-				AutoloadSounds = true
-			};
-		}
+        public TeraBackup()
+        {
+            Properties = new ModProperties()
+            {
+                Autoload = true,
+                AutoloadGores = true,
+                AutoloadSounds = true
+            };
+        }
 
-		public override void Load()
-		{
-			instance = this;
+        public override void Load()
+        {
+            instance = this;
 
-			if (!Main.dedServ)
-			{
-				Config.LoadConfig();
-				LoadedFKTModSettings = ModLoader.GetMod("FKTModSettings") != null;
-				try
-				{
-					if (LoadedFKTModSettings)
-					{
-						LoadModSettings();
-					}
-					if (Config.isBackup)
-					{
-						BackupAll();
-					}
-				}
-				catch { }
-			}
-		}
+            if (!Main.dedServ)
+            {
+                try
+                {
+                    // 旧設定ファイルの削除
+                    var oldConfigPath = Path.Combine(Main.SavePath, "Mod Configs", "TeraBackup.json"); ;
+                    if (File.Exists(oldConfigPath))
+                    {
+                        File.Delete(oldConfigPath);
+                    }
 
-		public override void PreSaveAndQuit()
-		{
-			Config.SaveValues();
-		}
+                    if (ModContent.GetInstance<TeraBackupConfig>().isBackup)
+                    {
+                        BackupAll();
+                    }
+                }
+                catch (Exception e)
+                {
+                    var configPath = Path.Combine(Main.SavePath, "Mod Configs", "TeraBackup_TeraBackupConfig.json");
+                    if (File.Exists(configPath))
+                    {
+                        File.Delete(configPath);
+                    }
+                    throw e;
+                }
+            }
+        }
 
-		public override void PostUpdateInput()
-		{
-			try
-			{
-				if (LoadedFKTModSettings && !Main.gameMenu)
-				{
-					UpdateModSettings();
-				}
-			}
-			catch { }
-		}
+        private string GetFormatedDateString()
+        {
+            var result = DateTime.Now.ToString(ModContent.GetInstance<TeraBackupConfig>().dateFormat);
+            foreach (var c in Path.GetInvalidFileNameChars())
+            {
+                result = result.Replace(c.ToString(), "");
+            }
+            return result;
+        }
 
-		private void LoadModSettings()
-		{
-			ModSetting setting = ModSettingsAPI.CreateModSettingConfig(this);
-			setting.AddComment($"TeraBackup v{TeraBackup.instance.Version}");
-			setting.AddBool("isBackup", "Take a backup", false);
-			setting.AddBool("isLogs", "Backup Logs", false);
-			setting.AddBool("isModConfigs", "Backup Mod Configs", false);
-			setting.AddBool("isMods", "Backup Mods", false);
-			setting.AddBool("isPlayers", "Backup Players", false);
-			setting.AddBool("isWorlds", "Backup Worlds", false);
-			setting.AddComment($"Date format: {Config.dateFormat}{Environment.NewLine}{GetFormatedDateString(true)}");
-		}
+        private void BackupAll()
+        {
+            try
+            {
+                TeraBackupConfig config = ModContent.GetInstance<TeraBackupConfig>();
 
-		private void UpdateModSettings()
-		{
-			ModSetting setting;
-			if (ModSettingsAPI.TryGetModSetting(this, out setting))
-			{
-				setting.Get("isBackup", ref Config.isBackup);
-				setting.Get("isLogs", ref Config.isLogs);
-				setting.Get("isModConfigs", ref Config.isModConfigs);
-				setting.Get("isMods", ref Config.isMods);
-				setting.Get("isPlayers", ref Config.isPlayers);
-				setting.Get("isWorlds", ref Config.isWorlds);
-			}
-		}
+                string path = Path.Combine(BackupPath, GetFormatedDateString());
 
-		private static string GetFormatedDateString(bool isError = false)
-		{
-			string result;
-			try
-			{
-				result = DateTime.Now.ToString(Config.dateFormat);
-				char[] invalidChars = Path.GetInvalidPathChars();
-				if (0 <= result.IndexOfAny(invalidChars))
-				{
-					if (isError)
-						result = $"Unusable characters are used:{Environment.NewLine}{string.Join(" ", invalidChars)}";
-					else
-						result = DateTime.Now.ToString(Config.defaultDateFormat);
-				}
-			}
-			catch (Exception ex)
-			{
-				if (isError)
-					result = ex.Message;
-				else
-					result = DateTime.Now.ToString(Config.defaultDateFormat);
-			}
-			return result;
-		}
+                if (config.isLogs)
+                    CopyDirectory(Path.Combine(Main.SavePath, "Logs"), path);
+                if (config.isModConfigs)
+                    CopyDirectory(Path.Combine(Main.SavePath, "Mod Configs"), path);
+                if (config.isModReader)
+                    CopyDirectory(Path.Combine(Main.SavePath, "Mod Reader"), path);
+                if (config.isModSources)
+                    CopyDirectory(Path.Combine(Main.SavePath, "Mod Sources"), path);
+                if (config.isMods)
+                    CopyDirectory(Path.Combine(Main.SavePath, "Mods"), path);
+                if (config.isPlayers)
+                    CopyDirectory(Main.PlayerPath, path);
+                if (config.isReferences)
+                    CopyDirectory(Path.Combine(Main.SavePath, "references"), path);
+                if (config.isWorlds)
+                    CopyDirectory(Main.WorldPath, path);
+                if (config.isModLoaderRootFiles)
+                    CopyDirectory(Main.SavePath, path, false);
+            }
+            catch (Exception e)
+            {
+                throw e;
+            }
+        }
 
-		private static void BackupAll()
-		{
-			try
-			{
-				string path = Path.Combine(BackupPath, GetFormatedDateString());
+        private void CopyDirectory(string copyFrom, string copyTo, bool isSubFolders = true)
+        {
+            string path = Path.Combine(copyTo, Path.GetFileName(copyFrom));
+            Directory.CreateDirectory(path);
 
-				if (Config.isLogs)
-					CopyDirectory(Path.Combine(Main.SavePath, "Logs"), path);
-				if (Config.isModConfigs)
-					CopyDirectory(Path.Combine(Main.SavePath, "Mod Configs"), path);
-				if (Config.isMods)
-					CopyDirectory(Path.Combine(Main.SavePath, "Mods"), path);
-				if (Config.isPlayers)
-					CopyDirectory(Main.PlayerPath, path);
-				if (Config.isWorlds)
-					CopyDirectory(Main.WorldPath, path);
-				
-			}
-			catch { }
-		}
+            foreach (var file in Directory.GetFiles(copyFrom))
+            {
+                File.Copy(file, Path.Combine(path, Path.GetFileName(file)), true);
+            }
 
-		private static void CopyDirectory(string copyFrom, string copyTo)
-		{
-			string path = Path.Combine(copyTo, Path.GetFileName(copyFrom));
-			Directory.CreateDirectory(path);
-
-			foreach (var file in Directory.GetFiles(copyFrom))
-			{
-				System.IO.File.Copy(file, Path.Combine(path, Path.GetFileName(file)), true);
-			}
-
-			//再帰
-			foreach (var dir in Directory.GetDirectories(copyFrom))
-			{
-				CopyDirectory(dir, path);
-			}
-		}
-	}
+            //再帰
+            if (isSubFolders)
+            {
+                foreach (var dir in Directory.GetDirectories(copyFrom))
+                {
+                    CopyDirectory(dir, path);
+                }
+            }
+        }
+    }
 }
